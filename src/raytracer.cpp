@@ -24,6 +24,7 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 	const Pixel_t red = {255,0,0};
 	const Pixel_t black = {0,0,0};
 	const Pixel_t white = {255,255,255};
+	const Pixel_t blue = {0,0,255};
 	
 	// Vertical and horizontal Field of View
 	float hfov = float(M_PI) / 3.5f;
@@ -35,8 +36,8 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 
 	// Create easy camera definition, and the basis vectors (u,v,n)
 	Camera_t camera;
-	camera.position = vec3(0.f, 0.f, 0.f);
-	camera.lookAt =   vec3(1.f, 1.f, 1.f);
+	camera.position = vec3(0.f, 0.f, -5.f);
+	camera.lookAt =   vec3(0.f, 0.f, 1.f);
 	camera.lookUp =   vec3(0.f, 1.f, 0.f);
 
 	// Setup basis coordinate system
@@ -77,14 +78,18 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 					pixelColor = vec2color( (ray.origin + ray.dir * tmin).normalize() );
 				} else {
 					tmin = tSphere,
-					pixelColor = red;
+					pixelColor = blue;
 				}
 			} else if (hitSphere) {
 				tmin = tSphere;
-				pixelColor = red;
+				pixelColor = blue;
 			} else if (hitPlane) {
 				tmin = tPlane;
-				pixelColor = vec2color( vec3(tmin, tmin, tmin) );
+				const vec3 intersection = ray.origin + tmin * ray.dir;
+				float scale = 0.5f;
+				int sum = int(scale*intersection.x) + int(scale*intersection.y) + int(scale*intersection.z);
+				bool flip = powf(-1.0f, sum) > 0.0f;
+				if ( flip ) { pixelColor = red; } else { pixelColor = black; }
 			}
 
 		} 
