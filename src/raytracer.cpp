@@ -50,7 +50,7 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 
 	vec3 vpc = camera.position - n; // viewport center
 
-	//plane_t plane( vec3(0.f, 3.f, 7.f), vec3(0.f, 0.f, -1.f) );
+	plane_t plane( vec3(0.f, -5.f,0.f), vec3(0.f, 1.f, 0.f) );
 
 	for ( int x=0; x<width; x++ ) {
 	for ( int y=0; y<height; y++ ) {
@@ -64,23 +64,30 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 		const ray_t ray( rayPoint, rayDir );
 		float tSphere = 0.f;
 		const bool hitSphere = ray.intersectSphere( vec3(1.f,1.f,1.f), 0.4, tSphere);
-		//const float tPlane = ray.intersectPlane( plane );
-		//const bool hitPlane = tPlane > 0.f;		
+		const float tPlane = ray.intersectPlane( plane );
+		const bool hitPlane = tPlane > 0.f;		
 
-		if ( hitSphere /*|| hitPlane*/ ) {
+		Pixel_t pixelColor = white;
+		if ( hitSphere || hitPlane ) {
 			float tmin = tSphere;
 
-			//if ( hitSphere && hitPlane ) {
-			//	tmin = std::min( tPlane, tSphere );	
-			//} else if (hitSphere) {
-			//	tmin = tSphere;
-			//} else if (hitPlane) {
-			//	tmin = tPlane;
-			//}
+			if ( hitSphere && hitPlane ) {
+				if ( tPlane < tSphere ) {
+					tmin = tPlane;
+					pixelColor = vec2color( (ray.origin + ray.dir * tmin).normalize() );
+				} else {
+					tmin = tSphere,
+					pixelColor = red;
+				}
+			} else if (hitSphere) {
+				tmin = tSphere;
+				pixelColor = red;
+			} else if (hitPlane) {
+				tmin = tPlane;
+				pixelColor = vec2color( vec3(tmin, tmin, tmin) );
+			}
 
-			pixels[x][y] = vec2color( (ray.origin + ray.dir * tmin).normalize() );
-		} else {
-			pixels[x][y] = white;
-		}
+		} 
+		pixels[x][y] = pixelColor;
 	}}
 }

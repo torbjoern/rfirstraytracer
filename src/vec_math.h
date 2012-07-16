@@ -100,16 +100,11 @@ struct ray_t
 		return true;
 	}
 
-	float intersectPlane( const plane_t &plane ) const
+	float intersectPlane( const plane_t &p ) const
 	{
-		float d = plane.normal.dot(dir);
-		if ( d != 0.0f ) 
-		{
-			float plane_dist_origin = plane.position.length();
-			float ndo = plane.normal.dot(this->origin);
-			float dist = -(ndo+plane_dist_origin) / d;
-			return dist;
-		}
-		return -1.f;
+		const ray_t &r = *this;
+		float planeDist = p.position.length();
+		float t = (planeDist - p.normal.dot(r.origin)) / p.normal.dot(r.dir);
+		return t;
 	}
 };
