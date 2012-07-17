@@ -4,6 +4,8 @@
 #include <vector>
 
 #include "raytracer.h"
+#include "vec_math.h"
+
 
 void drawImage(const std::vector<std::vector<Pixel_t>> &pixels, int width, int height)
 {
@@ -30,8 +32,8 @@ int main()
 		return 1;
 	}
 
-	int width = 200;
-	int height = 200;
+	int width = 300;
+	int height = 300;
 	GLFWwindow wnd = glfwOpenWindow(width, height, GLFW_WINDOWED, "R First Raytracer", nullptr);
 
 	if (!wnd)
@@ -44,21 +46,41 @@ int main()
 	glfwMakeContextCurrent(wnd);
 	glfwSwapInterval(1); // vsync
 
-	
 	std::vector<std::vector<Pixel_t>> pixels(width, height);
 
-	double traceStart = glfwGetTime();
-	trace( pixels, width, height );
-	double timeSpent = glfwGetTime() - traceStart;
-	std::cout << "spent " << timeSpent << " seconds in trace" << std::endl;
-
-
+	bool reTrace = true;
 	bool running = true;
 	while ( running ) {
+
+		if ( reTrace ) 
+		{
+			reTrace = false;
+			int mouse_x, mouse_y;
+			glfwGetMousePos(wnd, &mouse_x, &mouse_y);
+			float normalized_mouse_x = mouse_x / float(width);
+			float normalized_mouse_y = mouse_y / float(height);
+			float TWO_PI = 2.f * float(M_PI);
+
+			// Create easy camera definition, and the basis vectors (u,v,n)
+			Camera_t camera;
+			camera.position = vec3( cos( TWO_PI*normalized_mouse_x)*10.f, -4.5f, sin(TWO_PI*normalized_mouse_x)*10.f );
+			camera.lookAt =   vec3(0.f, 0.f, 0.f);
+			camera.lookUp =   vec3(0.f, 1.f, 0.f);
+	
+			
+			double traceStart = glfwGetTime();
+			std::cout << "Start trace..." << std::endl;
+			trace( pixels, width, height, camera );
+			double timeSpent = glfwGetTime() - traceStart;
+			std::cout << "spent " << timeSpent << " seconds in trace" << std::endl;
+		}
+
 		drawImage(pixels, width, height);
 		glfwSwapBuffers();
 		glfwPollEvents();
 		if ( glfwGetKey(wnd, GLFW_KEY_ESC ) ) running = false;
+
+		if ( glfwGetKey(wnd, GLFW_KEY_SPACE ) ) reTrace = true;
 	}
 
 

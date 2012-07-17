@@ -5,6 +5,7 @@
 #include <algorithm> // for min & max
 
 typedef unsigned char byte;
+const float epsilon = 1e-4f;
 
 struct vec3
 {
@@ -90,13 +91,23 @@ vec3 normalize(const vec3 &v)
 	return v;
 }
 
+static inline
+vec3 cross(const vec3 &a, const vec3 &b)
+{
+	return vec3(
+		a.y * b.z - a.z * b.y,
+		a.z * b.x - a.x * b.z,
+		a.x * b.y - a.y * b.x
+		);
+}
+
 // (u x v) dot w aka  Scalar Triple Product aka Box Product, corresponds to the 
 // signed volume of a parallelepiped formed by three independant vectors (u,v,w)
 // is equivalent to six times the volume of the tetrahedron spanned by (u,v,w)
 static inline
 float ScalarTriple(const vec3 &u, const vec3 &v, const vec3 &w)
 {
-	return u.cross(v).dot(w);
+	return cross(u,v).dot(w);
 }
 
 static inline
@@ -138,7 +149,7 @@ struct ray_t
 		float b = m.dot(dir);
 		float c = m.dot(m) - radi*radi;
 		// exit if r's origin is outside s (c>0) and r pointing away from s (b>0)
-		if ( c > 0.0 && b > 0.0 ) return FLT_MAX;
+		if ( c > -epsilon && b > -epsilon ) return FLT_MAX;
 		float discr = b*b - c;
 		if ( discr < 0.0f ) return FLT_MAX;
 		float t = -b - sqrt(discr);
@@ -162,7 +173,7 @@ struct ray_t
 		const ray_t &r = *this;
 		float planeDist = p.position.length();
 		float t = (planeDist - p.normal.dot(r.origin)) / p.normal.dot(r.dir);
-		if ( t < 0.0f ) return FLT_MAX;
+		if ( t < epsilon ) return FLT_MAX;
 		return t;
 	}
 
@@ -173,7 +184,7 @@ struct ray_t
 
 		const ray_t &ray = *this;
 		float t = (d - n.dot(ray.origin)) / n.dot(ray.dir);
-		if ( t < 0.0f ) return FLT_MAX;
+		if ( t < epsilon ) return FLT_MAX;
 		return t;
 	}
 
@@ -246,4 +257,11 @@ struct Intersection_t
 	float t;
 	vec3 normal;
 	Material *mat;
+};
+
+struct Camera_t
+{
+	vec3 position;
+	vec3 lookAt;
+	vec3 lookUp;
 };

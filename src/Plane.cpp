@@ -7,10 +7,9 @@ Plane::Plane(plane_t plane) {
 };
 
 bool Plane::intersect(const ray_t &ray, Intersection_t &hit) {
-	float planeDist = mPlane.position.length();
-	hit.t = (planeDist - mPlane.normal.dot(ray.origin)) / mPlane.normal.dot(ray.dir);
-	
-	if (hit.t > 0.f) {
+	float t = ray.intersectPlane(mPlane);
+	if ( t != FLT_MAX ) {
+		hit.t = t;
 		hit.normal = mPlane.normal;
 		return true;
 	}

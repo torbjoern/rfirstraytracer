@@ -5,6 +5,7 @@
 struct Material
 {
 	virtual vec3 shade( const vec3 &pos, const vec3 &normal ) = 0;
+	//virtual vec3 shadeLight( const vec3 &lightPos, const vec3 &pos, const vec3 &normal ) = 0;
 };
 
 struct MatNormal: public Material
@@ -19,19 +20,18 @@ struct MatChequered : public Material
 {
 	vec3 onColor;
 	vec3 offColor;
-	MatChequered( const vec3 &onColor, const vec3 &offColor )
-		: onColor(onColor), offColor(offColor)
+	float frequency;
+	MatChequered( const vec3 &onColor, const vec3 &offColor, float frequency=0.5f )
+		: onColor(onColor), offColor(offColor), frequency(frequency)
 	{
 	}
 	
 	virtual vec3 shade( const vec3 &pos, const vec3 &normal )
 	{
-		float scale = 0.5f;
-		const vec3 chequer = scale * pos;
-		int sum = int(chequer.x) + int(chequer.y) + int(chequer.z);
-		bool flip = pow(-1.0, sum) > 0.0;
+		const vec3 chequer = frequency * pos;
+		int sum = int( floor(chequer.x) + floor(chequer.y) + floor(chequer.z) );
 		
-		if ( flip ) return onColor;
+		if ( (sum&1) == 0 ) return onColor;
 		// else:
 		return offColor;
 	}
@@ -39,14 +39,14 @@ struct MatChequered : public Material
 
 struct MatPhong : public Material
 {
-	vec3 lightDir;
+	const vec3 diffuseColor;
 
-	MatPhong()
+	MatPhong(const vec3 &diffuseColor) : diffuseColor(diffuseColor)
 	{
-		lightDir = vec3( 1.0f, 1.0f, -2.0f ).normalize();
 	}
 	virtual vec3 shade( const vec3 &pos, const vec3 &normal )
 	{
-		return vec3(1.f,0.f,0.f) * std::max( normal.dot( lightDir ), 0.f ); // N.L
+		const vec3 lightDir = vec3( -1.0f, -1.0f, 0.0f ).normalize();
+		return diffuseColor * std::max( normal.dot( lightDir ), 0.f ); // N.L
 	}
 };
