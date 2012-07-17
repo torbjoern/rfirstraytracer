@@ -1,5 +1,7 @@
 #include "raytracer.h"
 #include "vec_math.h"
+#include "Plane.h"
+#include "Sphere.h"
 
 struct Camera_t
 {
@@ -25,6 +27,7 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 	const Pixel_t black = {0,0,0};
 	const Pixel_t white = {255,255,255};
 	const Pixel_t blue = {0,0,255};
+	const Pixel_t cls_color = {51,171,249};
 	
 	// Vertical and horizontal Field of View
 	float hfov = float(M_PI) / 3.5f;
@@ -51,8 +54,10 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 
 	vec3 vpc = camera.position - n; // viewport center
 
-	plane_t plane( vec3(0.f, -5.f,0.f), vec3(0.f, 1.f, 0.f) );
-
+	float tSphere = 0.f;
+	Sphere *sphere = new Sphere( vec3(1.f,1.f,1.f), 0.4, tSphere );
+	Plane *plane = new Plane( plane_t (vec3(0.f, -5.f,0.f), vec3(0.f, 1.f, 0.f)) );
+	
 	for ( int x=0; x<width; x++ ) {
 	for ( int y=0; y<height; y++ ) {
 	
@@ -63,33 +68,31 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 		const vec3 rayDir = (rayPoint - camera.position).normalize();
 
 		const ray_t ray( rayPoint, rayDir );
-		float tSphere = 0.f;
-		const bool hitSphere = ray.intersectSphere( vec3(1.f,1.f,1.f), 0.4, tSphere);
-		const float tPlane = ray.intersectPlane( plane );
-		const bool hitPlane = tPlane > 0.f;		
+		const bool hitSphere = sphere->intersect( ray );
+		const bool hitPlane = plane->intersect( ray );
 
-		Pixel_t pixelColor = white;
+		Pixel_t pixelColor = cls_color;
 		if ( hitSphere || hitPlane ) {
-			float tmin = tSphere;
+			float tmin = sphere->t;
 
 			if ( hitSphere && hitPlane ) {
-				if ( tPlane < tSphere ) {
-					tmin = tPlane;
+				if ( plane->t < tSphere ) {
+					tmin = plane->t;
 					pixelColor = vec2color( (ray.origin + ray.dir * tmin).normalize() );
 				} else {
-					tmin = tSphere,
+					tmin = sphere->t,
 					pixelColor = blue;
 				}
 			} else if (hitSphere) {
-				tmin = tSphere;
+				tmin = sphere->t;
 				pixelColor = blue;
 			} else if (hitPlane) {
-				tmin = tPlane;
+				tmin = plane->t;
 				const vec3 intersection = ray.origin + tmin * ray.dir;
 				float scale = 0.5f;
 				int sum = int(scale*intersection.x) + int(scale*intersection.y) + int(scale*intersection.z);
 				bool flip = powf(-1.0f, sum) > 0.0f;
-				if ( flip ) { pixelColor = red; } else { pixelColor = black; }
+				if ( flip ) { pixelColor = red; } else { pixelColor = white; }
 			}
 
 		} 

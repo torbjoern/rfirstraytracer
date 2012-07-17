@@ -83,7 +83,15 @@
     <ClCompile Include="..\depends\glfw\src\win32_window.c" />
     <ClCompile Include="..\depends\glfw\src\window.c" />
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\Object.cpp" />
+    <ClCompile Include="..\src\Plane.cpp" />
     <ClCompile Include="..\src\raytracer.cpp" />
+    <ClCompile Include="..\src\Sphere.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\Object.h" />
+    <ClInclude Include="..\src\Plane.h" />
+    <ClInclude Include="..\src\Sphere.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

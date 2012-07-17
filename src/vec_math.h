@@ -1,3 +1,4 @@
+#pragma once
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -65,6 +66,7 @@ struct plane_t
 	vec3 position;
 	vec3 normal;
 
+	plane_t() {};
 	plane_t(vec3 position, vec3 normal) : position(position), normal(normal) {}
 };
 
