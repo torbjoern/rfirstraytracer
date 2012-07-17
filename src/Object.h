@@ -3,8 +3,9 @@
 
 class Object {
 public:
-	Object();
+	Object() {}
+	virtual ~Object() {}
 	float t;
 	int type;
-	virtual bool intersect(ray_t ray) = 0;
+	virtual bool intersect(const ray_t &ray, Intersection_t &hit) = 0;
 };

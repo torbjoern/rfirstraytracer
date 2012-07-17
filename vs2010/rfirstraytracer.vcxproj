@@ -54,11 +54,13 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>../depends/glfw/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>kernel32.lib;user32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -83,16 +85,22 @@
     <ClCompile Include="..\depends\glfw\src\win32_window.c" />
     <ClCompile Include="..\depends\glfw\src\window.c" />
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\Monkey.cpp" />
     <ClCompile Include="..\src\Object.cpp" />
     <ClCompile Include="..\src\Plane.cpp" />
     <ClCompile Include="..\src\raytracer.cpp" />
     <ClCompile Include="..\src\Sphere.cpp" />
-    <ClCompile Include="..\src\trimesh.cpp" />
+    <ClCompile Include="..\src\Trimesh.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\Monkey.h" />
+    <ClInclude Include="..\src\monkeydata.h" />
     <ClInclude Include="..\src\Object.h" />
     <ClInclude Include="..\src\Plane.h" />
+    <ClInclude Include="..\src\raytracer.h" />
     <ClInclude Include="..\src\Sphere.h" />
+    <ClInclude Include="..\src\Trimesh.h" />
+    <ClInclude Include="..\src\vec_math.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

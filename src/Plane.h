@@ -6,6 +6,6 @@ private:
 	plane_t mPlane;
 	
 public:
-	virtual bool intersect(ray_t ray);
+	virtual bool intersect(const ray_t &ray, Intersection_t &hit);
 	Plane(plane_t plane);
 };

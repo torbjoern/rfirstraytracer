@@ -93,19 +93,37 @@
     <ClCompile Include="..\src\Plane.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\trimesh.cpp">
+    <ClCompile Include="..\src\Monkey.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Trimesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\Object.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="..\src\Monkey.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\Sphere.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="..\src\monkeydata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Object.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Plane.h">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\raytracer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Sphere.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Trimesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\vec_math.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

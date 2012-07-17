@@ -4,6 +4,7 @@
 #include "Object.h"
 #include "Plane.h"
 #include "Sphere.h"
+#include "Monkey.h"
 
 #include <iostream>
 
@@ -70,6 +71,9 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 	// Add objects to the scene
 	mainScene.push_back( new Sphere( vec3(1.f,1.f,1.f), 0.4f, tSphere ) );
 	mainScene.push_back( new Plane( plane_t (vec3(0.f, -5.f,0.f), vec3(0.f, 1.f, 0.f))) );
+	mainScene.push_back( new Monkey );
+
+	vec3 lightDir = vec3( 1.0f, 1.0f, -2.0f ).normalize();
 	
 	// For every pixel
 	for ( int x=0; x<width; x++ ) {
@@ -85,20 +89,22 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 			const ray_t ray( rayPoint, rayDir );
 
 			// For every object in the scene
-			Object *closestObject = NULL;
+			Intersection_t closestHit;
+			closestHit.t = FLT_MAX;
+
+			Intersection_t currentHit;
 		
 			for ( size_t i=0; i < mainScene.size(); i++) {
 				// Find intersection with the ray
-				if (mainScene[i]->intersect( ray ) ) {
+				if (mainScene[i]->intersect( ray, currentHit ) ) {
 					// Keep if closest
-					if ( closestObject == NULL || mainScene[i]->t < closestObject->t) { closestObject = mainScene[i]; }
+					if ( currentHit.t < closestHit.t ) { closestHit = currentHit; }
 				}
 			}
 
 			Pixel_t pixelColor = cls_color;
-			if ( closestObject != NULL ) {
-				float tmin = closestObject->t;
-
+			if ( closestHit.t != FLT_MAX ) {
+				/*
 				if (closestObject->type == SPHERE) {
 					pixelColor = blue;
 				} else if (closestObject->type == PLANE) {
@@ -107,9 +113,11 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 					int sum = int(scale*intersection.x) + int(scale*intersection.y) + int(scale*intersection.z);
 					bool flip = pow(-1.0, sum) > 0.0;
 					if ( flip ) { pixelColor = red; } else { pixelColor = white; }
-				}
-				else {
-					printf("ooops.. no valid object type found\n");
+				} else 
+					*/
+				{
+					vec3 shaded = vec3(1.f,0.f,0.f) * std::max( closestHit.normal.dot( lightDir ), 0.f ); // N.L
+					pixelColor = vec2color(shaded);
 				}
 
 			}

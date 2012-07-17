@@ -79,6 +79,17 @@ VEC_OP(+)
 VEC_OP(-)
 #undef VEC_OP
 
+static inline
+vec3 normalize(const vec3 &v)
+{
+	float len = v.length();
+	if ( len ) {
+		float rlen = 1.0f / len;
+		return vec3(v.x*rlen, v.y*rlen, v.z*rlen);
+	}
+	return v;
+}
+
 // (u x v) dot w aka  Scalar Triple Product aka Box Product, corresponds to the 
 // signed volume of a parallelepiped formed by three independant vectors (u,v,w)
 // is equivalent to six times the volume of the tetrahedron spanned by (u,v,w)
@@ -166,10 +177,8 @@ struct ray_t
 		return t;
 	}
 
-	float intersectTriangle( const vec3 &a, const vec3 &b, const vec3 &c ) const
+	float intersectTriangle( const vec3 &a, const vec3 &b, const vec3 &c, vec3 &geometric_normal ) const
 	{
-
-
 		const vec3 p = origin;
 		const vec3 q = origin + dir;
 		const vec3 pq = q - p;
@@ -182,6 +191,7 @@ struct ray_t
 		float v = ScalarTriple(pq, pa, pc); if ( v < 0.0f ) return FLT_MAX;
 		float w = ScalarTriple(pq, pb, pa); if ( w < 0.0f ) return FLT_MAX;
 		
+		geometric_normal = normalize( (b-a).cross(c-a) );
 		float t = intersectSegmentPlane(a,b,c); // Testing for inside triangle first is a little faster
 		return t;
 		

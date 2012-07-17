@@ -1,8 +1,7 @@
-#include "trimesh.h"
+#include "Monkey.h"
+#include "monkeydata.h"
 
-#include "monkey.h"
-
-void Trimesh::createMonkey()
+Monkey::Monkey()
 {
 	verts.clear();
 
@@ -36,33 +35,4 @@ void Trimesh::createMonkey()
 		}
 
 	}
-}
-
-
-Intersection_t Trimesh::trace(const ray_t &ray)
-{
-	Intersection_t isect;
-	isect.t = FLT_MAX;
-
-	float boxnear, boxfar;
-	if ( !ray.CheckBoxIntersection(bounds_min, bounds_max, boxnear, boxfar ) )
-	{
-		return isect;
-	}
-
-	const size_t numVerts = verts.size();
-	for ( size_t i=0; i<numVerts; i+=3 ) {
-		const vec3 &a = verts[i+0];
-		const vec3 &b = verts[i+1];
-		const vec3 &c = verts[i+2];
-
-		const float tTri = ray.intersectTriangle( a,b,c );
-		if ( tTri < isect.t  ) {
-			isect.t = tTri;
-			const vec3 hitPoint = ray.origin + isect.t * ray.dir;
-			isect.normal = (hitPoint - a).normalize();
-		}
-	}
-	
-	return isect;
 }
