@@ -1,6 +1,11 @@
+#pragma once
+
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <float.h>
+#include <algorithm> // for min & max
 
+typedef unsigned char byte;
 
 struct vec3
 {
@@ -8,6 +13,22 @@ struct vec3
 
 	vec3(){ x=0; y=0; z=0;} // default
 	vec3(float x, float y, float z) : x(x), y(y), z(z) {} // just set xyz
+
+	float& operator[](int i)
+	{
+		if ( i==0 ) return x;
+		if ( i==1 ) return y;
+		if ( i==2 ) return z;
+		return x; //dummy
+	}
+	
+	 float operator[](int i) const
+	{
+		if ( i==0 ) return x;
+		if ( i==1 ) return y;
+		if ( i==2 ) return z;
+		return x; //dummy
+	}
 
 	float dot(const vec3 b) const
 	{
@@ -59,6 +80,26 @@ VEC_OP(+)
 VEC_OP(-)
 #undef VEC_OP
 
+// (u x v) dot w aka  Scalar Triple Product aka Box Product, corresponds to the 
+// signed volume of a parallelepiped formed by three independant vectors (u,v,w)
+// is equivalent to six times the volume of the tetrahedron spanned by (u,v,w)
+static inline
+float ScalarTriple(const vec3 &u, const vec3 &v, const vec3 &w)
+{
+	return u.cross(v).dot(w);
+}
+
+static inline
+vec3 min(const vec3 &a, const vec3& b)
+{
+	return vec3( std::min(a.x, b.x), std::min(a.y, b.y), std::min(a.z, b.z) );
+}
+
+static inline
+vec3 max(const vec3 &a, const vec3& b)
+{
+	return vec3( std::max(a.x, b.x), std::max(a.y, b.y), std::max(a.z, b.z) );
+}
 
 struct plane_t
 {
@@ -75,29 +116,29 @@ struct ray_t
 
 	ray_t(vec3 origin, vec3 dir) : origin(origin), dir(dir) {}
 
-	bool intersectSphere( vec3 center, float radi, float &t ) const
+	float intersectSphere( vec3 center, float radi ) const
 	{
 		vec3 m = origin - center;
 		float b = m.dot(dir);
 		float c = m.dot(m) - radi*radi;
 		// exit if r's origin is outside s (c>0) and r pointing away from s (b>0)
-		if ( c > 0.0 && b > 0.0 ) return false;
+		if ( c > 0.0 && b > 0.0 ) return FLT_MAX;
 		float discr = b*b - c;
-		if ( discr < 0.0f ) return 0.f;
-		t = -b - sqrt(discr);
+		if ( discr < 0.0f ) return FLT_MAX;
+		float t = -b - sqrt(discr);
 		if ( t < 0.0f ) t = 0.0f; // clamp when inside sphere
-		return true;
+		return t;
 	}
 
 	// doesn't calculate t, only tests if we hit or not
-	bool intersectSphereTest( vec3 center, float radi ) const
+	float intersectSphereTest( vec3 center, float radi ) const
 	{
 		vec3 s = this->origin - center;
 		float sv = s.dot(this->dir);
 		float ss = s.dot(s);
 		float discr = sv*sv - ss + radi*radi;
-		if ( discr < 0.0f ) return false;
-		return true;
+		if ( discr < 0.0f ) return FLT_MAX;;
+		return discr;
 	}
 
 	float intersectPlane( const plane_t &p ) const
@@ -105,6 +146,85 @@ struct ray_t
 		const ray_t &r = *this;
 		float planeDist = p.position.length();
 		float t = (planeDist - p.normal.dot(r.origin)) / p.normal.dot(r.dir);
+		if ( t < 0.0f ) return FLT_MAX;
 		return t;
 	}
+
+	float intersectSegmentPlane( const vec3 &a, const vec3 &b, const vec3 &c ) const
+	{
+		const vec3 n = (b-a).cross(c-a);
+		const float d = n.dot(a);
+
+		const ray_t &ray = *this;
+		float t = (d - n.dot(ray.origin)) / n.dot(ray.dir);
+		if ( t < 0.0f ) return FLT_MAX;
+		return t;
+	}
+
+	float intersectTriangle( const vec3 &a, const vec3 &b, const vec3 &c ) const
+	{
+
+
+		const vec3 p = origin;
+		const vec3 q = origin + dir;
+		const vec3 pq = q - p;
+		const vec3 pa = a - p;
+		const vec3 pb = b - p;
+		const vec3 pc = c - p;
+		// Test if pq is inside the edges bc, ca, and ab.
+		// Done by testing that the signed tetrahedral volumes are all positive.
+		float u = ScalarTriple(pq, pc, pb); if ( u < 0.0f ) return FLT_MAX;
+		float v = ScalarTriple(pq, pa, pc); if ( v < 0.0f ) return FLT_MAX;
+		float w = ScalarTriple(pq, pb, pa); if ( w < 0.0f ) return FLT_MAX;
+		
+		float t = intersectSegmentPlane(a,b,c); // Testing for inside triangle first is a little faster
+		return t;
+		
+		// Compute barycentric coords (u,v,w) determining
+		// intersection point r = u*a + v*b + w*c
+		//float denom = 1.0f / (u+v+w);
+		//u *= denom;
+		//v *= denom;
+		//w *= denom;
+		//const vec3 pointOnTriangle = u*a + v*b + w*c;
+
+	}
+
+	// http://http.download.nvidia.com/developer/presentations/2005/GDC/Sponsored_Day/GDC_2005_VolumeRenderingForGames.pdf
+	bool CheckBoxIntersection(const vec3 &boxmin, const vec3 &boxmax, float &tnear, float &tfar) const
+	{
+		const vec3 &rayOrigin = this->origin;
+		const vec3 &rayDirNorm = this->dir;
+        vec3 invR = 1.0f / rayDirNorm;
+        vec3 tbot = invR * (boxmin - rayOrigin);
+        vec3 ttop = invR * (boxmax - rayOrigin);
+
+        //re-order intersections to find smallest and largest on each axis
+        vec3 tmin = min(ttop, tbot);
+        vec3 tmax = max(ttop, tbot);
+
+        //find the largest tmin and the smallest tmax
+        float t0xy = std::max(tmin.x, tmin.y);
+        float t0xz = std::max(tmin.x, tmin.z);
+        float largest_tmin = std::max(t0xy, t0xz);
+        
+		t0xy = std::min(tmax.x, tmax.y);
+		t0xz = std::min(tmax.x, tmax.z);
+        float smallest_tmax = std::min(t0xy, t0xz);
+
+        //check for a hit
+        if((largest_tmin > smallest_tmax)) {
+                return false;
+        } 
+
+        tnear = largest_tmin;
+        tfar = smallest_tmax;
+        return true;
+}
+};
+
+struct Intersection_t
+{
+	float t;
+	vec3 normal;
 };

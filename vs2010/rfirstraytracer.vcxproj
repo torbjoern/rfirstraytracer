@@ -84,6 +84,7 @@
     <ClCompile Include="..\depends\glfw\src\window.c" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\raytracer.cpp" />
+    <ClCompile Include="..\src\trimesh.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

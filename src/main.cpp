@@ -5,6 +5,23 @@
 
 #include "raytracer.h"
 
+void drawImage(const std::vector<std::vector<Pixel_t>> &pixels, int width, int height)
+{
+	
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0,width,height,0,-1.0f, 1.f);
+	glMatrixMode(GL_MODELVIEW); // doesnt matter if we are modelview or proj, as were not using translate, push, pop, etc.
+
+	glBegin(GL_POINTS);
+	for ( int i=0; i<width; i++ ){
+	for ( int j=0; j<height; j++ ){
+		glColor3ubv( &(pixels[i][j].r) );
+		glVertex2i(i,j);
+	}}
+	glEnd();
+}
+
 int main()
 {
 	if ( glfwInit() != GL_TRUE ) 
@@ -13,8 +30,8 @@ int main()
 		return 1;
 	}
 
-	int width = 600;
-	int height = 600;
+	int width = 200;
+	int height = 200;
 	GLFWwindow wnd = glfwOpenWindow(width, height, GLFW_WINDOWED, "R First Raytracer", nullptr);
 
 	if (!wnd)
@@ -25,35 +42,22 @@ int main()
 		exit(EXIT_FAILURE);
 	}
 	glfwMakeContextCurrent(wnd);
+	glfwSwapInterval(1); // vsync
 
 	
-	{ 
-		using std::vector;
-		vector<vector<Pixel_t>> pixels(width, height);
-		trace( pixels, width, height );
+	std::vector<std::vector<Pixel_t>> pixels(width, height);
 
-		glLoadIdentity();
-		glMatrixMode(GL_PROJECTION);
-		glOrtho(0,width,height,0,-1.0f, 1.f);
-		glMatrixMode(GL_MODELVIEW); // doesnt matter if we are modelview or proj, as were not using translate, push, pop, etc.
+	double traceStart = glfwGetTime();
+	trace( pixels, width, height );
+	double timeSpent = glfwGetTime() - traceStart;
+	std::cout << "spent " << timeSpent << " seconds in trace" << std::endl;
 
-		glBegin(GL_POINTS);
-		for ( int i=0; i<width; i++ ){
-		for ( int j=0; j<height; j++ ){
-			glColor3ubv( &(pixels[i][j].r) );
-			glVertex2i(i,j);
-		}}
-		glEnd();
-	}
-	
-	
-	glfwSwapBuffers();
 
 	bool running = true;
 	while ( running ) {
-
-		//glfwPollEvents();
-		glfwWaitEvents();
+		drawImage(pixels, width, height);
+		glfwSwapBuffers();
+		glfwPollEvents();
 		if ( glfwGetKey(wnd, GLFW_KEY_ESC ) ) running = false;
 	}
 
