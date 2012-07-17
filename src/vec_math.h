@@ -7,6 +7,16 @@
 typedef unsigned char byte;
 const float epsilon = 1e-4f;
 
+// fast float random in interval -1,1
+// source by RGBA: http://www.rgba.org/articles/sfrand/sfrand.htm
+static inline
+float sfrand()
+{
+	unsigned int a=(rand()<<16)|rand(); //we use the bottom 23 bits of the int, so one 16 bit rand() won't cut it.
+	a=(a&0x007fffff) | 0x40000000;
+	return( *((float*)&a) - 3.0f );
+}
+
 struct vec3
 {
 	float x,y,z;

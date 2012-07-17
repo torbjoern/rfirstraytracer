@@ -4,13 +4,15 @@
 
 struct Material
 {
-	virtual vec3 shade( const vec3 &pos, const vec3 &normal ) = 0;
+	bool isTransparent;
+
+	virtual vec3 shade( const vec3 &lightPos, const vec3 &pos, const vec3 &normal ) = 0;
 	//virtual vec3 shadeLight( const vec3 &lightPos, const vec3 &pos, const vec3 &normal ) = 0;
 };
 
 struct MatNormal: public Material
 {
-	virtual vec3 shade( const vec3 &pos, const vec3 &normal )
+	virtual vec3 shade( const vec3 &lightPos, const vec3 &pos, const vec3 &normal )
 	{
 		return 0.5f + 0.5f * normal;
 	}
@@ -26,7 +28,7 @@ struct MatChequered : public Material
 	{
 	}
 	
-	virtual vec3 shade( const vec3 &pos, const vec3 &normal )
+	virtual vec3 shade( const vec3 &lightPos, const vec3 &pos, const vec3 &normal )
 	{
 		const vec3 chequer = frequency * pos;
 		int sum = int( floor(chequer.x) + floor(chequer.y) + floor(chequer.z) );
@@ -44,9 +46,9 @@ struct MatPhong : public Material
 	MatPhong(const vec3 &diffuseColor) : diffuseColor(diffuseColor)
 	{
 	}
-	virtual vec3 shade( const vec3 &pos, const vec3 &normal )
+	virtual vec3 shade( const vec3 &lightPos, const vec3 &pos, const vec3 &normal )
 	{
-		const vec3 lightDir = vec3( -1.0f, -1.0f, 0.0f ).normalize();
-		return diffuseColor * std::max( normal.dot( lightDir ), 0.f ); // N.L
+		const vec3 toLight = ( lightPos-pos ).normalize();
+		return diffuseColor * std::max( normal.dot( toLight ), 0.f ); // N.L
 	}
 };

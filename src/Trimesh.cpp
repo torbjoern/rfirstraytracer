@@ -1,5 +1,22 @@
 #include "trimesh.h"
 
+Trimesh::Trimesh(const std::vector<vec3> &verts) : verts(verts)
+{
+	calcBounds();
+}
+
+void Trimesh::calcBounds()
+{
+	bounds_min = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+	bounds_max = vec3(FLT_MIN, FLT_MIN, FLT_MIN);
+
+	for (size_t i=0; i<verts.size(); i++){
+		const vec3 &v = verts[i];
+		bounds_min = min(bounds_min, v);
+		bounds_max = max(bounds_max, v);
+	}
+}
+
 bool Trimesh::intersect(const ray_t &ray, Intersection_t &hit)
 {
 	float boxnear, boxfar;

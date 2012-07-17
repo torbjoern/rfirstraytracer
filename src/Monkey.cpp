@@ -5,9 +5,6 @@ Monkey::Monkey()
 {
 	verts.clear();
 
-	bounds_min = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-	bounds_max = vec3(FLT_MIN, FLT_MIN, FLT_MIN);
-
 	int stride = 3*2;
 	for (int i=0; i<(3*NUM_FACES); i+=3) {
 		// Read indices for a face (a,b,c)
@@ -16,23 +13,15 @@ Monkey::Monkey()
 		int ic = stride*monkeyf[i+2];
 
 		// Flip Y-axis
-		const vec3 va = vec3(monkey_verts[ia+0], -monkey_verts[ia+1], monkey_verts[ia+2]);
-		const vec3 vb = vec3(monkey_verts[ib+0], -monkey_verts[ib+1], monkey_verts[ib+2]);
-		const vec3 vc = vec3(monkey_verts[ic+0], -monkey_verts[ic+1], monkey_verts[ic+2]);
+		const vec3 va = vec3(monkey_verts[ia+0], monkey_verts[ia+1], monkey_verts[ia+2]);
+		const vec3 vb = vec3(monkey_verts[ib+0], monkey_verts[ib+1], monkey_verts[ib+2]);
+		const vec3 vc = vec3(monkey_verts[ic+0], monkey_verts[ic+1], monkey_verts[ic+2]);
 
 		verts.push_back( va );
 		verts.push_back( vb );
 		verts.push_back( vc );
-		
-		for ( int dim=0; dim<3; dim++){
-			if ( va[dim] < bounds_min[dim] ) bounds_min[dim] = va[dim];
-			if ( vb[dim] < bounds_min[dim] ) bounds_min[dim] = vb[dim];
-			if ( vc[dim] < bounds_min[dim] ) bounds_min[dim] = vc[dim];
-
-			if ( va[dim] > bounds_max[dim] ) bounds_max[dim] = va[dim];
-			if ( vb[dim] > bounds_max[dim] ) bounds_max[dim] = vb[dim];
-			if ( vc[dim] > bounds_max[dim] ) bounds_max[dim] = vc[dim];
-		}
-
 	}
+	// Finally, calc bounding box min,max for vertices
+	calcBounds();
+
 }
