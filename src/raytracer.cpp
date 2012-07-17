@@ -60,26 +60,32 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 	typedef std::vector<Object*> SceneList;
 	SceneList mainScene;
 
+	// Add objects to the scene
 	mainScene.push_back( new Sphere( vec3(1.f,1.f,1.f), 0.4, tSphere ) );
 	mainScene.push_back( new Plane( plane_t (vec3(0.f, -5.f,0.f), vec3(0.f, 1.f, 0.f))) );
 	
+	// For every pixel
 	for ( int x=0; x<width; x++ ) {
 	for ( int y=0; y<height; y++ ) {
 	
 		const vec3 uScaled = u * (x-width/2.f)*pw;
 		const vec3 vScaled = v * (y-height/2.f)*ph;
 
+		// Construct a ray from the eye 
 		const vec3 rayPoint = vpc + uScaled + vScaled;
 		const vec3 rayDir = (rayPoint - camera.position).normalize();
 
 		const ray_t ray( rayPoint, rayDir );
 
+		// For every object in the scene
 		Object *closestObject = NULL;
 		
 		for ( size_t i=0; i < mainScene.size(); i++) {
-			 if (mainScene[i]->intersect( ray ) && (closestObject == NULL || mainScene[i]->t < closestObject->t)) {
+			// Find intersection with the ray
+			if (mainScene[i]->intersect( ray ) && (closestObject == NULL || mainScene[i]->t < closestObject->t)) {
+				// Keep if closest
 				closestObject = mainScene[i];
-			 }
+			}
 		}
 
 		Pixel_t pixelColor = cls_color;
@@ -89,7 +95,7 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 			if (closestObject->type == SPHERE) {
 				pixelColor = blue;
 			} else if (closestObject->type == PLANE) {
-				const vec3 intersection = ray.origin + tmin * ray.dir;
+				const vec3 intersection = ray.origin + tmin * ray.dir; // Parametric line
 				float scale = 0.5f;
 				int sum = int(scale*intersection.x) + int(scale*intersection.y) + int(scale*intersection.z);
 				bool flip = powf(-1.0f, sum) > 0.0f;
