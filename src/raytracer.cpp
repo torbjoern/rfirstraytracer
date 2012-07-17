@@ -1,5 +1,6 @@
 #include "raytracer.h"
 #include "vec_math.h"
+#include "Object.h"
 #include "Plane.h"
 #include "Sphere.h"
 
@@ -55,8 +56,12 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 	vec3 vpc = camera.position - n; // viewport center
 
 	float tSphere = 0.f;
-	Sphere *sphere = new Sphere( vec3(1.f,1.f,1.f), 0.4, tSphere );
-	Plane *plane = new Plane( plane_t (vec3(0.f, -5.f,0.f), vec3(0.f, 1.f, 0.f)) );
+
+	typedef std::vector<Object*> SceneList;
+	SceneList mainScene;
+
+	mainScene.push_back( new Sphere( vec3(1.f,1.f,1.f), 0.4, tSphere ) );
+	mainScene.push_back( new Plane( plane_t (vec3(0.f, -5.f,0.f), vec3(0.f, 1.f, 0.f))) );
 	
 	for ( int x=0; x<width; x++ ) {
 	for ( int y=0; y<height; y++ ) {
@@ -68,31 +73,30 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 		const vec3 rayDir = (rayPoint - camera.position).normalize();
 
 		const ray_t ray( rayPoint, rayDir );
-		const bool hitSphere = sphere->intersect( ray );
-		const bool hitPlane = plane->intersect( ray );
+
+		Object *closestObject = NULL;
+		
+		for ( size_t i=0; i < mainScene.size(); i++) {
+			 if (mainScene[i]->intersect( ray ) && (closestObject == NULL || mainScene[i]->t < closestObject->t)) {
+				closestObject = mainScene[i];
+			 }
+		}
 
 		Pixel_t pixelColor = cls_color;
-		if ( hitSphere || hitPlane ) {
-			float tmin = sphere->t;
+		if ( closestObject != NULL ) {
+			float tmin = closestObject->t;
 
-			if ( hitSphere && hitPlane ) {
-				if ( plane->t < tSphere ) {
-					tmin = plane->t;
-					pixelColor = vec2color( (ray.origin + ray.dir * tmin).normalize() );
-				} else {
-					tmin = sphere->t,
-					pixelColor = blue;
-				}
-			} else if (hitSphere) {
-				tmin = sphere->t;
+			if (closestObject->type == SPHERE) {
 				pixelColor = blue;
-			} else if (hitPlane) {
-				tmin = plane->t;
+			} else if (closestObject->type == PLANE) {
 				const vec3 intersection = ray.origin + tmin * ray.dir;
 				float scale = 0.5f;
 				int sum = int(scale*intersection.x) + int(scale*intersection.y) + int(scale*intersection.z);
 				bool flip = powf(-1.0f, sum) > 0.0f;
 				if ( flip ) { pixelColor = red; } else { pixelColor = white; }
+			}
+			else {
+				printf("ooops.. no valid object type found\n");
 			}
 
 		} 

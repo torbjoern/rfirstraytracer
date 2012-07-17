@@ -5,5 +5,6 @@ class Object {
 public:
 	Object();
 	float t;
+	int type;
 	virtual bool intersect(ray_t ray);
 };

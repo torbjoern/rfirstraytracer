@@ -70,6 +70,11 @@ struct plane_t
 	plane_t(vec3 position, vec3 normal) : position(position), normal(normal) {}
 };
 
+enum object_type {
+	SPHERE,
+	PLANE
+};
+
 struct ray_t
 {
 	vec3 origin;

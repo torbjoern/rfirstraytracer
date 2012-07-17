@@ -2,6 +2,8 @@
 
 Plane::Plane(plane_t plane) {
 	mPlane = plane;
+
+	type = PLANE;
 };
 
 bool Plane::intersect(ray_t ray) {

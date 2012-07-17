@@ -4,6 +4,8 @@ Sphere::Sphere(vec3 pos, float radi, float tmin) {
 	position = pos;
 	radius = radi;
 	t = tmin;
+
+	type = SPHERE;
 };
 
 bool Sphere::intersect(ray_t ray) {
