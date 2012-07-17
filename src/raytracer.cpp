@@ -1,6 +1,9 @@
 #include "raytracer.h"
 #include "vec_math.h"
 #include "trimesh.h"
+#include "Object.h"
+#include "Plane.h"
+#include "Sphere.h"
 
 #include <iostream>
 
@@ -32,6 +35,7 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 	const Pixel_t black = {0,0,0};
 	const Pixel_t white = {255,255,255};
 	const Pixel_t blue = {0,0,255};
+	const Pixel_t cls_color = {51,171,249};
 	
 	// Vertical and horizontal Field of View
 	float hfov = float(M_PI) / 3.5f;
@@ -58,88 +62,60 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 
 	vec3 vpc = camera.position - n; // viewport center
 
-	plane_t plane( vec3(0.f, -5.f,0.f), vec3(0.f, 1.f, 0.f) );
+	float tSphere = 0.f;
 
-	Trimesh trimesh;
-	trimesh.createMonkey();
+	typedef std::vector<Object*> SceneList;
+	SceneList mainScene;
 
-	for ( int x=0; x<width; x++ ) {
-	for ( int y=0; y<height; y++ ) {
+	// Add objects to the scene
+	mainScene.push_back( new Sphere( vec3(1.f,1.f,1.f), 0.4f, tSphere ) );
+	mainScene.push_back( new Plane( plane_t (vec3(0.f, -5.f,0.f), vec3(0.f, 1.f, 0.f))) );
 	
-		const vec3 uScaled = u * (x-width/2.f)*pw;
-		const vec3 vScaled = v * (y-height/2.f)*ph;
+	// For every pixel
+	for ( int x=0; x<width; x++ ) {
+		for ( int y=0; y<height; y++ ) {
+	
+			const vec3 uScaled = u * (x-width/2.f)*pw;
+			const vec3 vScaled = v * (y-height/2.f)*ph;
 
-		const vec3 rayPoint = vpc + uScaled + vScaled;
-		const vec3 rayDir = (rayPoint - camera.position).normalize();
+			// Construct a ray from the eye 
+			const vec3 rayPoint = vpc + uScaled + vScaled;
+			const vec3 rayDir = (rayPoint - camera.position).normalize();
 
-		int material_index = -1;
-		const ray_t ray( rayPoint, rayDir );
-		float tmin = FLT_MAX;
-		vec3 shadingNormal;
+			const ray_t ray( rayPoint, rayDir );
+
+			// For every object in the scene
+			Object *closestObject = NULL;
 		
-		const vec3 sphereCenter1 = trimesh.bounds_min;
-		const float tSphere1 = ray.intersectSphere( sphereCenter1, 0.2f );
-		if ( tSphere1 < tmin ) {
-			tmin = tSphere1;
-			material_index = 0;
-			const vec3 intersection = ray.origin + tmin * ray.dir;
-			shadingNormal = (intersection-sphereCenter1).normalize();
-		}
+			for ( size_t i=0; i < mainScene.size(); i++) {
+				// Find intersection with the ray
+				if (mainScene[i]->intersect( ray ) ) {
+					// Keep if closest
+					if ( closestObject == NULL || mainScene[i]->t < closestObject->t) { closestObject = mainScene[i]; }
+				}
+			}
 
-		const vec3 sphereCenter2 = trimesh.bounds_max;
-		const float tSphere2 = ray.intersectSphere( sphereCenter2, 0.2f );
-		if ( tSphere2 < tmin ) {
-			tmin = tSphere2;
-			material_index = 0;
-			const vec3 intersection = ray.origin + tmin * ray.dir;
-			shadingNormal = (intersection-sphereCenter2).normalize();
-		}
+			Pixel_t pixelColor = cls_color;
+			if ( closestObject != NULL ) {
+				float tmin = closestObject->t;
 
-		const float tPlane = ray.intersectPlane( plane );
-		if ( tPlane < tmin ) {
-			tmin = tPlane;
-			material_index = 2;
-			shadingNormal = plane.normal;
-		}
+				if (closestObject->type == SPHERE) {
+					pixelColor = blue;
+				} else if (closestObject->type == PLANE) {
+					const vec3 intersection = ray.origin + tmin * ray.dir; // Parametric line
+					float scale = 0.5f;
+					int sum = int(scale*intersection.x) + int(scale*intersection.y) + int(scale*intersection.z);
+					bool flip = pow(-1.0, sum) > 0.0;
+					if ( flip ) { pixelColor = red; } else { pixelColor = white; }
+				}
+				else {
+					printf("ooops.. no valid object type found\n");
+				}
 
-		//float boxin, boxout;
-		//bool hitBox = ray.CheckBoxIntersection( vec3(-0.5f,-0.5f,-0.5f), vec3(+0.5f,+0.5f,+0.5f), boxin, boxout);
-		//if ( hitBox && boxin < tmin ) {
-		//	tmin = boxin;
-		//	material_index = 3;
-		//	//shadingNormal = plane.normal;
-		//}
+			}
+			pixels[x][y] = pixelColor;
+		} // for y
 
-		//const float tTri = ray.intersectTriangle( vec3(-.5f,-.5f,0.f), vec3(+.5f,-.5f,0.f), vec3(0.f,+0.5f,0.f) );
-		
-		Intersection_t isect = trimesh.trace( ray );
-		if ( isect.t < tmin ) {
-			tmin = isect.t;
-			material_index = 0;
-			shadingNormal = isect.normal;
-		}
-
-		const vec3 intersection = ray.origin + tmin * ray.dir;
-
-		Pixel_t pixelColor = white;
-		if ( material_index == 0 ) { pixelColor = vec2color(.5f + .5f*shadingNormal); }
-		if ( material_index == 1 ) { pixelColor = vec2color( (ray.origin + ray.dir * tmin).normalize() ); }
-		if ( material_index == 2 ) {
-			float scale = 0.5f;
-			int sum = int(scale*intersection.x) + int(scale*intersection.y) + int(scale*intersection.z);
-			bool flip = pow(-1.0, sum) > 0.0;
-			if ( flip ) { pixelColor = red; } else { pixelColor = black; }
-		}
-		if ( material_index == 3 ) {
-			pixelColor = blue;
-		}
-
-		pixels[x][y] = pixelColor;
-	}
-		std::cout << "x=" << x << std::endl;
-	}
-}
-
-void shade()
-{
+		printf("x = %d\n", x);
+	} //for x
 }
