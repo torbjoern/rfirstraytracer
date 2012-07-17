@@ -1,9 +1,8 @@
 #include "Sphere.h"
 
-Sphere::Sphere(vec3 pos, float radi, float tmin) {
+Sphere::Sphere(vec3 pos, float radi) {
 	position = pos;
 	radius = radi;
-	t = tmin;
 
 	type = SPHERE;
 };

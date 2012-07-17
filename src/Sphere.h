@@ -9,5 +9,5 @@ private:
 	
 public:
 	virtual bool intersect(const ray_t &ray, Intersection_t &hit);
-	Sphere(vec3 pos, float radi, float tmin);
+	Sphere(vec3 pos, float radi);
 };

@@ -5,6 +5,7 @@
 #include "Plane.h"
 #include "Sphere.h"
 #include "Monkey.h"
+#include "Material.h"
 
 #include <iostream>
 
@@ -63,17 +64,29 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 
 	vec3 vpc = camera.position - n; // viewport center
 
-	float tSphere = 0.f;
 
 	typedef std::vector<Object*> SceneList;
 	SceneList mainScene;
 
-	// Add objects to the scene
-	mainScene.push_back( new Sphere( vec3(1.f,1.f,1.f), 0.4f, tSphere ) );
-	mainScene.push_back( new Plane( plane_t (vec3(0.f, -5.f,0.f), vec3(0.f, 1.f, 0.f))) );
-	mainScene.push_back( new Monkey );
+	MatChequered sjakkMat( vec3(1.f, 0.f, 0.f), vec3(1.f, 1.f, 1.f) );
+	MatNormal normalMat;
+	MatPhong phongMat;
 
-	vec3 lightDir = vec3( 1.0f, 1.0f, -2.0f ).normalize();
+	// Add objects to the scene
+	Sphere *sphere = new Sphere( vec3(1.f,1.f,1.f), 0.4f );
+	sphere->mat = &normalMat;
+
+	Plane *plane = new Plane( plane_t (vec3(0.f, -5.f,0.f), vec3(0.f, 1.f, 0.f)));
+	plane->mat = &sjakkMat;
+
+	Monkey *monkey = new Monkey;
+	monkey->mat = &phongMat;
+
+	mainScene.push_back( sphere );
+	mainScene.push_back( plane );
+	mainScene.push_back( monkey );
+
+	
 	
 	// For every pixel
 	for ( int x=0; x<width; x++ ) {
@@ -98,28 +111,20 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 				// Find intersection with the ray
 				if (mainScene[i]->intersect( ray, currentHit ) ) {
 					// Keep if closest
-					if ( currentHit.t < closestHit.t ) { closestHit = currentHit; }
+					if ( currentHit.t < closestHit.t ) 
+					{ 
+						closestHit = currentHit; 
+						closestHit.mat = mainScene[i]->mat; // Copy pointer to material
+					}
 				}
 			}
 
 			Pixel_t pixelColor = cls_color;
-			if ( closestHit.t != FLT_MAX ) {
-				/*
-				if (closestObject->type == SPHERE) {
-					pixelColor = blue;
-				} else if (closestObject->type == PLANE) {
-					const vec3 intersection = ray.origin + tmin * ray.dir; // Parametric line
-					float scale = 0.5f;
-					int sum = int(scale*intersection.x) + int(scale*intersection.y) + int(scale*intersection.z);
-					bool flip = pow(-1.0, sum) > 0.0;
-					if ( flip ) { pixelColor = red; } else { pixelColor = white; }
-				} else 
-					*/
-				{
-					vec3 shaded = vec3(1.f,0.f,0.f) * std::max( closestHit.normal.dot( lightDir ), 0.f ); // N.L
-					pixelColor = vec2color(shaded);
-				}
-
+			if ( closestHit.t != FLT_MAX ) 
+			{
+				const vec3 hitPoint = ray.origin + closestHit.t * ray.dir;
+				vec3 shaded = closestHit.mat->shade( hitPoint, closestHit.normal );
+				pixelColor = vec2color(shaded);
 			}
 			pixels[x][y] = pixelColor;
 		} // for y

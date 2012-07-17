@@ -238,8 +238,12 @@ struct ray_t
 }
 };
 
+// fwd decl
+struct Material;
+
 struct Intersection_t
 {
 	float t;
 	vec3 normal;
+	Material *mat;
 };

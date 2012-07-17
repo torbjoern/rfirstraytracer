@@ -93,6 +93,7 @@
     <ClCompile Include="..\src\Trimesh.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\Material.h" />
     <ClInclude Include="..\src\Monkey.h" />
     <ClInclude Include="..\src\monkeydata.h" />
     <ClInclude Include="..\src\Object.h" />
