@@ -7,5 +7,5 @@ private:
 	
 public:
 	virtual bool intersect(const ray_t &ray, Intersection_t &hit);
-	Plane(plane_t plane);
+	Plane(const plane_t &plane);
 };

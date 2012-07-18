@@ -136,9 +136,13 @@ struct plane_t
 {
 	vec3 position;
 	vec3 normal;
+	float d; // Distance from origin
 
 	plane_t() {};
-	plane_t(vec3 position, vec3 normal) : position(position), normal(normal) {}
+	plane_t(const vec3 &position, const vec3 &normal) : position(position), normal(normal) 
+	{
+		d = -(normal.dot(position));
+	}
 };
 
 enum object_type {
@@ -153,13 +157,13 @@ struct ray_t
 
 	ray_t(vec3 origin, vec3 dir) : origin(origin), dir(dir) {}
 
-	float intersectSphere( vec3 center, float radi ) const
+	float intersectSphere( const vec3 &center, float radi ) const
 	{
 		vec3 m = origin - center;
 		float b = m.dot(dir);
 		float c = m.dot(m) - radi*radi;
 		// exit if r's origin is outside s (c>0) and r pointing away from s (b>0)
-		if ( c > -epsilon && b > -epsilon ) return FLT_MAX;
+		if ( c > 0 && b > 0 ) return FLT_MAX;
 		float discr = b*b - c;
 		if ( discr < 0.0f ) return FLT_MAX;
 		float t = -b - sqrt(discr);
@@ -168,7 +172,7 @@ struct ray_t
 	}
 
 	// doesn't calculate t, only tests if we hit or not
-	float intersectSphereTest( vec3 center, float radi ) const
+	float intersectSphereTest( const vec3 &center, float radi ) const
 	{
 		vec3 s = this->origin - center;
 		float sv = s.dot(this->dir);
@@ -181,9 +185,8 @@ struct ray_t
 	float intersectPlane( const plane_t &p ) const
 	{
 		const ray_t &r = *this;
-		float planeDist = p.position.length();
-		float t = (planeDist - p.normal.dot(r.origin)) / p.normal.dot(r.dir);
-		if ( t < epsilon ) return FLT_MAX;
+		const float t = (p.d - p.normal.dot(r.origin)) / p.normal.dot(r.dir);
+		if ( t < 0.f ) return FLT_MAX;
 		return t;
 	}
 
@@ -193,8 +196,8 @@ struct ray_t
 		const float d = n.dot(a);
 
 		const ray_t &ray = *this;
-		float t = (d - n.dot(ray.origin)) / n.dot(ray.dir);
-		if ( t < epsilon ) return FLT_MAX;
+		const float t = (d - n.dot(ray.origin)) / n.dot(ray.dir);
+		if ( t < 0 ) return FLT_MAX;
 		return t;
 	}
 

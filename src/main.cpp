@@ -35,8 +35,8 @@ int main()
 		return 1;
 	}
 
-	int width = 300;
-	int height = 300;
+	int width = 600;
+	int height = 400;
 	GLFWwindow wnd = glfwOpenWindow(width, height, GLFW_WINDOWED, "R First Raytracer", nullptr);
 
 	if (!wnd)

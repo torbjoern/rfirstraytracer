@@ -1,8 +1,7 @@
 #include "Plane.h"
 
-Plane::Plane(plane_t plane) {
+Plane::Plane(const plane_t &plane) {
 	mPlane = plane;
-
 	type = PLANE;
 };
 

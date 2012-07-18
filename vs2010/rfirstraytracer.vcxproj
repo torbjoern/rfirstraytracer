@@ -55,7 +55,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>../depends/glfw/include</AdditionalIncludeDirectories>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
@@ -86,6 +86,7 @@
     <ClCompile Include="..\depends\glfw\src\win32_time.c" />
     <ClCompile Include="..\depends\glfw\src\win32_window.c" />
     <ClCompile Include="..\depends\glfw\src\window.c" />
+    <ClCompile Include="..\src\Box.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\Monkey.cpp" />
     <ClCompile Include="..\src\Object.cpp" />
@@ -95,6 +96,7 @@
     <ClCompile Include="..\src\Trimesh.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\Box.h" />
     <ClInclude Include="..\src\Material.h" />
     <ClInclude Include="..\src\Monkey.h" />
     <ClInclude Include="..\src\monkeydata.h" />

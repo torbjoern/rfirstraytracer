@@ -13,6 +13,8 @@ const Pixel_t white = {255,255,255};
 const Pixel_t blue = {0,0,255};
 const Pixel_t cls_color = {51,171,249};
 
+static const int MAX_RECURSIVE_TRACES = 3;
+
 class Object;
 typedef std::vector<Object*> SceneList;
 
