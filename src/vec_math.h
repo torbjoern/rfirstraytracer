@@ -5,7 +5,7 @@
 #include <algorithm> // for min & max
 
 typedef unsigned char byte;
-const float epsilon = 1e-4f;
+const float epsilon = 1e-3f;
 
 // fast float random in interval -1,1
 // source by RGBA: http://www.rgba.org/articles/sfrand/sfrand.htm
@@ -21,23 +21,22 @@ struct vec3
 {
 	float x,y,z;
 
-	vec3(){ x=0; y=0; z=0;} // default
+	vec3() : x(0), y(0), z(0) {} // default
+	vec3(float s) : x(s), y(s), z(s) {} // all same
 	vec3(float x, float y, float z) : x(x), y(y), z(z) {} // just set xyz
 
 	float& operator[](int i)
 	{
 		if ( i==0 ) return x;
 		if ( i==1 ) return y;
-		if ( i==2 ) return z;
-		return x; //dummy
+		else return z;
 	}
-	
-	 float operator[](int i) const
+
+	float operator[](int i) const
 	{
 		if ( i==0 ) return x;
 		if ( i==1 ) return y;
-		if ( i==2 ) return z;
-		return x; //dummy
+		else return z;
 	}
 
 	float dot(const vec3 b) const
@@ -157,7 +156,7 @@ struct ray_t
 
 	ray_t(vec3 origin, vec3 dir) : origin(origin), dir(dir) {}
 
-	float intersectSphere( const vec3 &center, float radi ) const
+	float intersectSphere( const vec3 &center, float radi, bool &isInside ) const
 	{
 		vec3 m = origin - center;
 		float b = m.dot(dir);
@@ -167,7 +166,13 @@ struct ray_t
 		float discr = b*b - c;
 		if ( discr < 0.0f ) return FLT_MAX;
 		float t = -b - sqrt(discr);
-		if ( t < 0.0f ) t = 0.0f; // clamp when inside sphere
+		if ( t < 0.0f ) 
+		{
+				t = 0.0f; // clamp when inside sphere
+				isInside = true;
+		} else {
+			isInside = false;
+		}
 		return t;
 	}
 
@@ -263,13 +268,18 @@ struct ray_t
 };
 
 // fwd decl
-struct Material;
+class Material;
 
 struct Intersection_t
 {
 	float t;
 	vec3 normal;
+	bool isInside;
 	Material *mat;
+
+	Intersection_t() : isInside(false)
+	{
+	}
 };
 
 struct Camera_t

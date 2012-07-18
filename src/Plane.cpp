@@ -10,6 +10,7 @@ bool Plane::intersect(const ray_t &ray, Intersection_t &hit) {
 	if ( t != FLT_MAX ) {
 		hit.t = t;
 		hit.normal = mPlane.normal;
+		hit.mat = mat;
 		return true;
 	}
 	return false;

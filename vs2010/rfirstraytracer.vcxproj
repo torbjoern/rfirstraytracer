@@ -92,17 +92,20 @@
     <ClCompile Include="..\src\Object.cpp" />
     <ClCompile Include="..\src\Plane.cpp" />
     <ClCompile Include="..\src\raytracer.cpp" />
+    <ClCompile Include="..\src\Scene.cpp" />
     <ClCompile Include="..\src\Sphere.cpp" />
     <ClCompile Include="..\src\Trimesh.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Box.h" />
+    <ClInclude Include="..\src\Light.h" />
     <ClInclude Include="..\src\Material.h" />
     <ClInclude Include="..\src\Monkey.h" />
     <ClInclude Include="..\src\monkeydata.h" />
     <ClInclude Include="..\src\Object.h" />
     <ClInclude Include="..\src\Plane.h" />
     <ClInclude Include="..\src\raytracer.h" />
+    <ClInclude Include="..\src\Scene.h" />
     <ClInclude Include="..\src\Sphere.h" />
     <ClInclude Include="..\src\Trimesh.h" />
     <ClInclude Include="..\src\vec_math.h" />

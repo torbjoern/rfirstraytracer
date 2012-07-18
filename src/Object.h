@@ -1,7 +1,7 @@
 #pragma once
 #include "vec_math.h"
 
-struct Material;// fwd decl
+class Material;// fwd decl
 
 class Object {
 public:

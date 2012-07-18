@@ -39,6 +39,7 @@ bool Trimesh::intersect(const ray_t &ray, Intersection_t &hit)
 			hit.t = t_triangle;
 			const vec3 hitPoint = ray.origin + hit.t * ray.dir;
 			hit.normal = geometric_normal; // TODO, interpolate normals with barycentric coords (uvw)
+			hit.mat = mat;
 		}
 	}
 	return num_tris_hit > 0;

@@ -5,10 +5,10 @@
 
 #include "raytracer.h"
 #include "vec_math.h"
+#include "Scene.h"
 
 void drawImage( const std::vector<std::vector<Pixel_t>> &pixels, int width, int height)
-{
-	
+{	
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(0,width,height,0,-1.0f, 1.f);
@@ -50,7 +50,9 @@ int main()
 	glfwSwapInterval(1); // vsync
 
 	std::vector<std::vector<Pixel_t>> pixels(width, height);
-	SceneList &mainScene = createScene();
+
+	Scene myScene;
+	myScene.createTestScene();
 
 	bool reTrace = true;
 	bool running = true;
@@ -75,7 +77,7 @@ int main()
 			
 			double traceStart = glfwGetTime();
 			std::cout << "Start trace..." << std::endl;
-			trace( pixels, width, height, camera, mainScene );
+			trace( myScene, camera, pixels, width, height );
 			double timeSpent = glfwGetTime() - traceStart;
 			std::cout << "spent " << timeSpent << " seconds in trace" << std::endl;
 		}

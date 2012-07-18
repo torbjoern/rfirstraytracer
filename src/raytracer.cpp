@@ -8,6 +8,9 @@
 #include "Monkey.h"
 #include "Material.h"
 
+#include "Scene.h"
+#include "Light.h"
+
 #include <iostream>
 
 Pixel_t vec2color(const vec3 &v)
@@ -19,136 +22,78 @@ Pixel_t vec2color(const vec3 &v)
 	return c;
 }
 
-void castRay( const ray_t &ray, const std::vector<Object*> &mainScene,  Intersection_t &closestHit )
+void castRay( const ray_t &ray, const Scene &scene,  Intersection_t &closestHit )
 {
-	for ( size_t i=0; i < mainScene.size(); i++) {
+	const auto &primtives = scene.primitives;
+	for ( size_t i=0; i < primtives.size(); i++) {
 		// Find intersection with the ray
 		Intersection_t currentHit;
-		if (mainScene[i]->intersect( ray, currentHit ) ) {
+		if (primtives[i]->intersect( ray, currentHit ) ) {
 			// Keep if closest
 			if ( currentHit.t < closestHit.t ) 
 			{ 
-				closestHit = currentHit; 
-				closestHit.mat = mainScene[i]->mat; // Copy pointer to material
+				closestHit = currentHit;
 			}
 		}
 	}
 }
 
-bool castShadowRay( const ray_t &ray, const std::vector<Object*> &mainScene )
+bool castShadowRay( const ray_t &ray, const Scene &scene, float shadowT )
 {
-	for ( size_t i=0; i < mainScene.size(); i++) {
+	const auto &primtives = scene.primitives;
+	for ( size_t i=0; i < primtives.size(); i++) {
+		
 		// Find intersection with the ray
 		Intersection_t currentHit;
-		if (mainScene[i]->intersect( ray, currentHit ) ) {
-			return true;
+		if (primtives[i]->intersect( ray, currentHit ) ) {
+			if ( currentHit.t <= shadowT && currentHit.mat->castsShadow ) return true;
 		}
 	}
 	return false;
 }
 
-SceneList createScene()
-{
-	SceneList mainScene;
-	std::vector<Material*> materials;
-	Material* sjakkMat = new MatChequered( vec3(1.f, 0.f, 0.f), vec3(1.f, 1.f, 1.f) );
-	Material* blackWhiteChequerMat = new MatChequered( vec3(0.f, 0.f, 0.f), vec3(1.f, 1.f, 1.f), 5.f );
-	Material* normalMat = new MatNormal;
-	Material* phongMat = new MatPhong( vec3(0.9f, 0.4f, 0.1f).normalize() );
-	
-	Material* reflPhongMat = new MatPhong( vec3(0.8f, 0.8f, 0.8f).normalize() );
-	reflPhongMat->isReflective = true;
-
-	materials.push_back(sjakkMat);
-	materials.push_back(blackWhiteChequerMat);
-	materials.push_back(normalMat);
-	materials.push_back(phongMat);
-	materials.push_back(reflPhongMat);
-
-	// Add objects to the scene
-
-	Plane *plane = new Plane( plane_t (vec3(0.f,1.1f,0.f), vec3(0.f, 1.f, 0.f))); // TODO. get epsilon working at origin
-	plane->mat = sjakkMat;
-	mainScene.push_back( plane );
-
-	vec3 boxPos( 2.f, 0.f, 0.f );
-	Box *box = new Box( boxPos+vec3(-.5f, -.5f, -.5f), boxPos+vec3(.5f, .5f, .5f) );
-	box->mat = normalMat;
-	mainScene.push_back( box );
-
-	Sphere *sphere = new Sphere( vec3(0.f, 0.f,0.f), 0.8f );
-	sphere->mat = reflPhongMat;
-	mainScene.push_back( sphere );
-
-	//Monkey *monkey = new Monkey;
-	//monkey->mat = reflPhongMat;
-	//mainScene.push_back( monkey );
-	
-	//std::vector<vec3> tris;
-	//tris.push_back( vec3(-.5f,-.5f,0.f) );
-	//tris.push_back( vec3(+.5f,-.5f,0.f) );
-	//tris.push_back( vec3(0.f,+0.5f,0.f) );
-	//Trimesh* singleTriangle = new Trimesh( tris );
-	//singleTriangle->mat = phongMat;
-	//mainScene.push_back( singleTriangle );
-
-	int pointsInCircle = 8;
-	for ( int i=0; i<pointsInCircle; i++ ){
-		float a = 2.f*(float)M_PI * i/float(pointsInCircle);
-		float radi = 3.f;
-		const vec3 pos(cos(a)*radi,0.0f,sin(a)*radi);
-		Sphere *sphere = new Sphere( pos, 0.4f );
-		Material* sphereMat = new MatPhong( vec3( .5f+.5f*cos(a), 0.f, .5f+.5f*sin(a) ).normalize() );
-		//sphereMat->isReflective = false;
-		materials.push_back( sphereMat );
-		sphere->mat = sphereMat;
-		mainScene.push_back( sphere );
-	}
-
-	
-
-	//int pointsInLine = 20.f;
-	//for ( int i=0; i<pointsInLine; i++ ){
-	//	float pos =  i/float(pointsInLine);
-	//	Sphere *sphere = new Sphere( vec3(-3.0f + 3.f*pos,1.32f,0.f), 0.32f );
-	//	sphere->mat = phongMat;
-	//	mainScene.push_back( sphere );
-	//}
-
-	return mainScene;
-}
-
-vec3 shade( const SceneList &mainScene,
+vec3 shade( const Scene &scene,
 			const Intersection_t &closestHit,
 			const vec3 &hitPoint,
 			const ray_t &ray,
-			const std::vector<vec3> &light_positions, float shadowContrib)
+			float shadowContrib)
 {
-	float shadowAtt = 1.f;
+	float shadowAtt = 1.0f;
 
-	size_t num_lights = light_positions.size();
+	const auto &lights = scene.lights;
+	size_t num_lights = lights.size();
 	for (size_t iLight=0; iLight<num_lights; iLight++){
-		const vec3 &lightPos = light_positions[iLight];
-		vec3 toLight = (lightPos - hitPoint).normalize();
-		const ray_t shadowRay(hitPoint+epsilon*toLight, toLight );
-		if ( castShadowRay( shadowRay, mainScene ) ) {
+		const vec3 &lightPos = lights[iLight]->pos;
+		vec3 toLight = lightPos - hitPoint;
+		const float tdist = toLight.length();
+		toLight = toLight * (1.0f / tdist); // normalize
+
+		//Intersection_t isec;
+		//isec.t = FLT_MAX;
+		//castRay( ray_t(hitPoint+epsilon*toLight, toLight), scene, isec );
+
+		if ( castShadowRay( ray_t(hitPoint+epsilon*toLight, toLight), scene, tdist ) )
+		//if ( isec.t < tdist && isec.mat->castsShadow )
+		{
 			shadowAtt -= shadowContrib;
 		}
 	}
 
 	vec3 shaded(0.f,0.f,0.f);
 	for (size_t iLight=0; iLight<num_lights; iLight++){
-		const vec3 &lightPos = light_positions[iLight];
+		const vec3 &lightPos = lights[iLight]->pos;
 		shaded = shaded + closestHit.mat->shade( lightPos, hitPoint, closestHit.normal, ray );
 	}
-	return shadowAtt*shaded / num_lights;
+	return shadowAtt*shaded / float(num_lights);
 	
 }
 
-void raytrace( const SceneList &mainScene, 
-	           const std::vector<vec3> &light_positions, 
+void raytrace( const Scene &scene, 
 			   float shadowContrib,
-			   const ray_t &ray, int recursionDepth, vec3 &acc )
+			   const ray_t &ray, 
+			   int recursionDepth, 
+			   vec3 &acc,
+			   float input_rIndex = 1.f)
 {
 	if ( recursionDepth > MAX_RECURSIVE_TRACES ) {
 		return;
@@ -158,12 +103,14 @@ void raytrace( const SceneList &mainScene,
 	Intersection_t closestHit;
 	closestHit.t = FLT_MAX;
 
-	castRay( ray, mainScene, closestHit );
+	// Primary Ray
+	castRay( ray, scene, closestHit );
 
 	if ( closestHit.t != FLT_MAX ) 
 	{
+		// Diffuse shading and shadow ray
 		const vec3 hitPoint = ray.origin + closestHit.t * ray.dir;
-		const vec3 diff = shade(mainScene, closestHit, hitPoint, ray, light_positions, shadowContrib );
+		const vec3 diff = shade(scene, closestHit, hitPoint, ray, shadowContrib );
 		acc = acc + diff;
 
 		// Reflection
@@ -172,12 +119,39 @@ void raytrace( const SceneList &mainScene,
 			const vec3 &N = closestHit.normal;
 			vec3 R = ray.dir - 2.0f * ray.dir.dot(N) * N;
 			vec3 rcol(0.f,0.f,0.f);
-			raytrace(mainScene, light_positions, shadowContrib, ray_t(hitPoint+R*epsilon, R), recursionDepth+1, rcol);
-			acc = acc + 0.3f * rcol;
-		}		
+			raytrace(scene, shadowContrib, ray_t(hitPoint+R*epsilon, R), recursionDepth+1, rcol);
+				if (rcol.x > 1.f) rcol.x = 1.f;
+				if (rcol.y > 1.f) rcol.y = 1.f;
+				if (rcol.z > 1.f) rcol.z = 1.f;
+			acc = acc + 0.9f * rcol;
+		}
+		// Refraction
+		if ( closestHit.mat->isTransparent && recursionDepth < MAX_RECURSIVE_TRACES ) 
+		{
+			const float rIndex = 1.3f;
+			const float n = input_rIndex / rIndex;
+			vec3 N = closestHit.normal;//normDir; // inside or outside
+			if (closestHit.isInside) N = -1.f * N;
+
+			const float cosI = -N.dot(ray.dir);
+			const float cosT2 = 1.0f - n*n * (1.0f-cosI*cosI);
+			if (cosT2 > 0.0f)
+			{
+				const vec3 T = (n*ray.dir) + (n*cosI - sqrtf(cosT2))*N;
+				vec3 rcol( 0, 0, 0);
+				raytrace(scene,shadowContrib,ray_t(hitPoint+epsilon*T, T), recursionDepth+1, rcol, rIndex);
+				
+				if (rcol.x > 1.f) rcol.x = 1.f;
+				if (rcol.y > 1.f) rcol.y = 1.f;
+				if (rcol.z > 1.f) rcol.z = 1.f;
+				
+				acc = acc + 0.8f * rcol;
+			}
+		}
 	} else {
 		acc = acc + vec3(51/255.f,171/255.f,249/255.f);
 	}
+
 }
 
 /*
@@ -185,7 +159,7 @@ takes a vector of pixels - the image to write to
 
 creates a camera basis, a scene, traces the scene.
 */
-void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height, const Camera_t &camera, const SceneList &mainScene )
+void trace( const Scene &scene, const Camera_t &camera, std::vector<std::vector<Pixel_t>> &pixels, int width, int height )
 {
 	// Vertical and horizontal Field of View
 	float hfov = float(M_PI) / 3.5f;
@@ -202,12 +176,9 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height, co
 
 	vec3 vpc = (camera.position - n); // viewport center
 
-	std::vector<vec3> light_positions;
-	light_positions.push_back( vec3(4.f, 4.f, 4.f) );
-	light_positions.push_back( vec3(-4.f, 4.f, -4.f) );
 
-	size_t num_lights = light_positions.size();
-	float shadowContrib = 0.5f / num_lights;
+	size_t num_lights = scene.lights.size();
+	float shadowContrib = 0.7f / num_lights;
 
 	// For every pixel
 #pragma omp parallel for
@@ -225,7 +196,7 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height, co
 			const vec3 rayDir = (rayPoint - camera.position).normalize();
 
 			const ray_t ray( rayPoint, rayDir );
-			raytrace( mainScene, light_positions, shadowContrib, ray, 1, final );
+			raytrace( scene, shadowContrib, ray, 1, final );
 #else
 			for ( int tx = -1; tx < 2; tx++ ) 
 			for ( int ty = -1; ty < 2; ty++ )
@@ -237,7 +208,7 @@ void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height, co
 				const vec3 rayPoint = vpc + uScaled + vScaled;
 				const vec3 rayDir = (rayPoint - camera.position).normalize();
 				const ray_t ray( rayPoint, rayDir );
-				raytrace( mainScene, light_positions, shadowContrib, ray, 1, final );
+				raytrace( scene, shadowContrib, ray, 1, final );
 			}
 			final = final / 9.f;
 #endif

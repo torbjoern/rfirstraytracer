@@ -15,11 +15,8 @@ const Pixel_t cls_color = {51,171,249};
 
 static const int MAX_RECURSIVE_TRACES = 3;
 
-class Object;
-typedef std::vector<Object*> SceneList;
-
 // fwd decl
 struct Camera_t;
-SceneList createScene();
-//void castRay( const ray_t &ray, const SceneList &mainScene,  Intersection_t &closestHit );
-void trace( std::vector<std::vector<Pixel_t>> &pixels, int width, int height, const Camera_t &camera, const SceneList &mainScene );
+class Scene;
+
+void trace( const Scene &scene, const Camera_t &camera, std::vector<std::vector<Pixel_t>> &pixels, int width, int height );
