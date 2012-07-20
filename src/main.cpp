@@ -35,8 +35,8 @@ int main()
 		return 1;
 	}
 
-	int width = 600;
-	int height = 400;
+	int width = 800;
+	int height = 600;
 	GLFWwindow wnd = glfwOpenWindow(width, height, GLFW_WINDOWED, "R First Raytracer", nullptr);
 
 	if (!wnd)
@@ -70,14 +70,14 @@ int main()
 			float zoom = 0.5f + normalized_mouse_y * 10.f;
 			// Create easy camera definition, and the basis vectors (u,v,n)
 			Camera_t camera;
-			camera.position = vec3( cos( TWO_PI*normalized_mouse_x)*zoom, 0.5f, sin(TWO_PI*normalized_mouse_x)*zoom );
+			camera.position = vec3( cos( TWO_PI*normalized_mouse_x)*zoom, 2.5f, sin(TWO_PI*normalized_mouse_x)*zoom );
 			camera.lookAt =   vec3(0.f, 0.f, 0.f);
 			camera.lookUp =   vec3(0.f, 1.f, 0.f);
 	
 			
 			double traceStart = glfwGetTime();
 			std::cout << "Start trace..." << std::endl;
-			trace( myScene, camera, pixels, width, height );
+			renderImage( myScene, camera, pixels, width, height );
 			double timeSpent = glfwGetTime() - traceStart;
 			std::cout << "spent " << timeSpent << " seconds in trace" << std::endl;
 		}

@@ -5,7 +5,7 @@
 #include <algorithm> // for min & max
 
 typedef unsigned char byte;
-const float epsilon = 1e-3f;
+const float epsilon = .001f;
 
 // fast float random in interval -1,1
 // source by RGBA: http://www.rgba.org/articles/sfrand/sfrand.htm
@@ -24,20 +24,6 @@ struct vec3
 	vec3() : x(0), y(0), z(0) {} // default
 	vec3(float s) : x(s), y(s), z(s) {} // all same
 	vec3(float x, float y, float z) : x(x), y(y), z(z) {} // just set xyz
-
-	float& operator[](int i)
-	{
-		if ( i==0 ) return x;
-		if ( i==1 ) return y;
-		else return z;
-	}
-
-	float operator[](int i) const
-	{
-		if ( i==0 ) return x;
-		if ( i==1 ) return y;
-		else return z;
-	}
 
 	float dot(const vec3 b) const
 	{
@@ -71,7 +57,27 @@ struct vec3
 		}
 		return *this;
 	}
+
+	float& operator[](int i)
+	{
+		if ( i==0 ) return x;
+		if ( i==1 ) return y;
+		else return z;
+	}
+
+	float operator[](int i) const
+	{
+		if ( i==0 ) return x;
+		if ( i==1 ) return y;
+		else return z;
+	}
+
+	vec3 operator- () const { return vec3(-x,-y,-z); }
+	void operator+= (const vec3 &rhs) { x+=rhs.x; y+=rhs.y; z+=rhs.z; }
+	void operator-= (const vec3 &rhs) { x-=rhs.x; y-=rhs.y; z-=rhs.z; }
+	void operator*= (const vec3 &rhs) { x*=rhs.x; y*=rhs.y; z*=rhs.z; }
 };
+
 // Create binary, and two scalar overloads. This trick taken from cube2 src
 #define VEC_OP(OP)                                                    \
 static inline vec3 operator OP (const vec3 &a, const vec3 &b) {          \
@@ -151,10 +157,10 @@ enum object_type {
 
 struct ray_t
 {
-	vec3 origin;
-	vec3 dir;
+	const vec3 origin;
+	const vec3 dir;
 
-	ray_t(vec3 origin, vec3 dir) : origin(origin), dir(dir) {}
+	ray_t(const vec3 &origin, const vec3 &dir) : origin(origin), dir(dir) {}
 
 	float intersectSphere( const vec3 &center, float radi, bool &isInside ) const
 	{
@@ -168,8 +174,8 @@ struct ray_t
 		float t = -b - sqrt(discr);
 		if ( t < 0.0f ) 
 		{
-				t = 0.0f; // clamp when inside sphere
-				isInside = true;
+			t = 0.0f; // clamp when inside sphere
+			isInside = true;
 		} else {
 			isInside = false;
 		}
@@ -190,9 +196,15 @@ struct ray_t
 	float intersectPlane( const plane_t &p ) const
 	{
 		const ray_t &r = *this;
-		const float t = (p.d - p.normal.dot(r.origin)) / p.normal.dot(r.dir);
-		if ( t < 0.f ) return FLT_MAX;
-		return t;
+		const float nDotDir = p.normal.dot(r.dir);
+		if ( nDotDir != 0.0f ) 
+		{
+			const float nDotO = p.normal.dot(r.origin);
+			const float t = (p.d - nDotO) / nDotDir;
+			if ( t < 0.f ) return FLT_MAX;
+			return t;
+		}
+		return FLT_MAX;
 	}
 
 	float intersectSegmentPlane( const vec3 &a, const vec3 &b, const vec3 &c ) const
